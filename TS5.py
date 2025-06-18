@@ -124,5 +124,46 @@ analizar_senal('ecg_sin_ruido.npy', fs=1000, nombre='ECG')
 # analizar_senal('silbido.wav',nombre='Audio 3')
 # analizar_senal('audio2.npy', fs=48000, nombre='Audio 2')
 
+#%%%
+#COMPARO DIFERENTES  M !!!
+
+fs = 1000
+x = np.load('ecg_sin_ruido.npy').reshape(-1)
+
+# fs, x = sio.wavfile.read('la cucaracha.wav')
+x = x - np.mean(x)
+x = x / np.std(x)
+N = len(x)
+M_vals = [N//2, N//5, N//8, N//25]
+print(N)
+
+plt.figure(figsize=(12, 6))
+
+# Guardar resultados
+resultados = []
+
+for M in M_vals:
+    psd = blackman_tukey(x, M=M)
+    frecs = np.fft.fftfreq(N, 1/fs)
+    f95, f98, bw, _, _ = estimar_ancho_de_banda(psd, frecs)
+
+    # Guardar resultados
+    resultados.append((M, f95, f98, bw))
+
+    # Graficar PSD
+    plt.plot(frecs[:N//2], 10 * np.log10(psd[:N//2] + 1e-12), label=f'M = {M}')
+
+plt.title('Comparación de PSDs para distintos valores de M (Blackman-Tukey)')
+plt.xlabel('Frecuencia [Hz]')
+plt.ylabel('PSD [dB]')
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+# Mostrar tabla de resultados
+import pandas as pd
+tabla = pd.DataFrame(resultados, columns=['M', 'f95 [Hz]', 'f98 [Hz]', 'BW (98-95%) [Hz]'])
+print(tabla.to_string(index=False))
 
 
